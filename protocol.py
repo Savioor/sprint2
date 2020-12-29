@@ -24,19 +24,14 @@ def _detect_error(byte_to_detect_errors):
 
 def _get_start_protocol(content, num_of_leds):
     start_segments = ['1' * num_of_leds]
-    length = textwrap.wrap(BitArray(bytes(str(len(content)).zfill(LEN_OF_MSG_LENGTH), "ascii")).bin, num_of_leds)
+    length = [str(format(len(content), "08b"))]
     return start_segments + length
 
 
 def _identify_start(byte_stream, num_of_leds):
-    count_init = 0
     for i, byte in enumerate(byte_stream):
         if byte == "1" * num_of_leds:
-            count_init += 1
-            if count_init == FRAMES_PER_SECOND:
-                break
-        else:
-            count_init = 0
+            break
     return byte_stream[i + 1:]
 
 
@@ -61,9 +56,9 @@ def _bits2chr(b):
 
 
 def _get_msg_length(byte_stream):
-    raw_length = byte_stream[:LEN_OF_MSG_LENGTH]
-    length = int("".join([_bits2chr(byte) for byte in raw_length]))
-    msg = byte_stream[LEN_OF_MSG_LENGTH:LEN_OF_MSG_LENGTH + length]
+    raw_length = byte_stream[0]
+    length = int(raw_length, 2)
+    msg = byte_stream[0:length]
     return length, msg
 
 
@@ -79,15 +74,13 @@ def raw_to_data(byte_stream):
     return "".join(decoded_msg)
 
 
-# import random
-# file_path = r"C:\Users\t8875881\Desktop\secret.txt"
-# with open(file_path) as file:
-#     print("".join(file.readlines()))
-# raw_data = data_to_raw(file_path, NUM_OF_LEDS)
-# print("Sending:",raw_data)
+import random
+file_path = r"C:\Users\t8875881\Desktop\secret.txt"
+with open(file_path) as file:
+    print("".join(file.readlines()))
+raw_data = data_to_raw(file_path, NUM_OF_LEDS)
+print("Sending:",raw_data)
 # noise_length = 8
 # raw_data = ["".join([str(random.randint(0, 1)) for _ in range(NUM_OF_LEDS)]) for _ in range(noise_length)] + raw_data
-# beginning = _identify_start(raw_data, NUM_OF_LEDS)
-# msg_length, message = _get_msg_length(beginning)
-# print("Got:", message)
-# print(raw_to_data(message))
+print("Got:", raw_data[2:])
+print(raw_to_data(raw_data[2:]))
