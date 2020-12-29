@@ -12,7 +12,8 @@ class SecretCamera(cv2.VideoCapture, Camera):
     :param data: the camera data object that describes this camera
     """
 
-    DANIEL = "http://132.64.143.185:5000/video_feed"
+    ARAZI = "http://132.64.143.185:5000/video_feed"
+    DANIEL = "http://132.64.143.105:5000/video_feed"
 
     def __init__(self, address: str, data: CameraData = UNKNOWN_CAMERA):
         """
