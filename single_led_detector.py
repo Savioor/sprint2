@@ -77,8 +77,8 @@ class ImageProcessing:
 
 def main():
     #camera = gbv.USBCamera(0)
-    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test.avi")
-    #camera = s
+    # camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test.avi")
+    camera = SecretCamera(SecretCamera.ARAZI)
     imgp = ImageProcessing(camera)
     imgp.setup()
 
@@ -113,4 +113,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main2()
+    main()
