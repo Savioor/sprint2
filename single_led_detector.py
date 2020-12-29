@@ -2,6 +2,7 @@ import cv2
 from reciever import SecretCamera
 from multi_led_reader import MultiLedReader
 import gbvision as gbv
+from protocol import raw_to_data, raw_to_bmp
 import time
 
 # ColorThreshold([[176, 255], [198, 255], [155, 255]], 'RGB')
@@ -110,7 +111,7 @@ def setup_stage(camera, circle_finder):
 
     return imgp, reader1, reader2  # ret ImageProcessing, top reader, bottom reader
 
-SLEEP = 0.1
+SLEEP = 0.15
 def wait_stage(proc, finder, top_reader, bot_reader):
     empty = False
     while True:
@@ -195,7 +196,7 @@ def read_stage_2(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False
             prev = curr
             prevprev = curr
         elif prev != curr:
-            if curr == SECERT:
+            if prev == SECERT:
                 ret.append(prevprev)
             else:
                 ret.append(prev)
@@ -241,23 +242,13 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
     return ret
 
 
-def read_secret(video_mode=False):
-    camera = gbv.USBCamera(SecretCamera.DANIEL)
-    # camera = gbv.USBCamera(r"final9-03.avi")
-    # camera = cv2.VideoCapture.self(SecretCamera.DANIEL)
-    # camera = gbv.AsyncUSBCamera(SecretCamera.DANIEL)
-    # camera.wait_start_reading()
-    circle_finder = CircleFindWrapper()
-
-    proc, reader_top, reader_bot = setup_stage(camera, circle_finder)
-
-    input("press enter")
-
+def read_secret(camera, circle_finder, proc, reader_top, reader_bot, video_mode=False):
     leng = wait_stage(proc, circle_finder, reader_top, reader_bot)
     print(leng)
 
     secret = read_stage_2(proc, circle_finder, leng, reader_top, reader_bot, video_mode)
     print(secret)
+    return secret
 
 
 def main():
@@ -297,5 +288,21 @@ def main():
 
 
 if __name__ == '__main__':
-    read_secret()
+    camera = gbv.USBCamera(SecretCamera.DANIEL)
+    # camera = gbv.USBCamera(r"final9-03.avi")
+    # camera = cv2.VideoCapture.self(SecretCamera.DANIEL)
+    # camera = gbv.AsyncUSBCamera(SecretCamera.DANIEL)
+    # camera.wait_start_reading()
+    circle_finder = CircleFindWrapper()
+
+    proc, reader_top, reader_bot = setup_stage(camera, circle_finder)
+
+    input("press enter")
+
+    first = read_secret(camera, circle_finder, proc, reader_top, reader_bot)
+    print(raw_to_data(first))
+    second = read_secret(camera, circle_finder, proc, reader_top, reader_bot)
+    print(raw_to_data(second))
+    thirf = read_secret(camera, circle_finder, proc, reader_top, reader_bot)
+    raw_to_bmp(thirf)
 
