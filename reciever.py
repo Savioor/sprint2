@@ -1,5 +1,6 @@
 from gbvision import CameraData, Camera, AsyncCamera
 from gbvision.models.cameras import UNKNOWN_CAMERA
+import gbvision as gbv
 import cv2
 import platform
 
@@ -22,6 +23,7 @@ class SecretCamera(cv2.VideoCapture, Camera):
         """
         cv2.VideoCapture.__init__(self, address, cv2.CAP_FFMPEG)
         self._data = data.copy()
+        self.bbox = None
 
     def is_opened(self) -> bool:
         return self.isOpened()
@@ -29,6 +31,17 @@ class SecretCamera(cv2.VideoCapture, Camera):
     @staticmethod
     def __is_on_linux() -> bool:
         return platform.system() == 'Linux'
+
+    def manually_bound(self):
+        frame = self._read()
+        self.bbox = cv2.selectROI('feed', frame[1])
+
+    def _read(self, image=None):
+        return cv2.VideoCapture.read(self, image)
+
+    def read(self, image=None):
+        inp = self._read(image)
+        return inp[0], gbv.crop(inp[1], *self.bbox) if self.bbox is not None else inp[1]
 
     def set_exposure(self, exposure) -> bool:
         return False
