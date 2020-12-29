@@ -9,9 +9,8 @@ from led_controller import Led_Controller
 is_processing = False
 
 
-def leak_from_usb():
+def leak_from_usb(led_controller):
     global is_processing
-    led_controller = Led_Controller()
     arr = data_to_raw(find(), len(Led_Controller.PINS))
     wait_until_not_processing()
     is_processing = True
@@ -54,6 +53,13 @@ def leak_file():
 
 
 def main():
+    led_controller = Led_Controller()
+    lights = range(len(led_controller.PINS))
+    for light in lights:
+        led_controller.turn_on(light)
+    input()
+    for light in lights:
+        led_controller.turn_off(light)
     print("Inset USB to leak it, input path of file to leak it")
     usb_leaker_thread = Thread(target=leak_from_usb)
     usb_leaker_thread.start()
