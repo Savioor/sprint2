@@ -1,5 +1,6 @@
 from gbvision import CameraData, Camera, AsyncCamera
 from gbvision.models.cameras import UNKNOWN_CAMERA
+from typing import Tuple
 import gbvision as gbv
 import cv2
 import platform
@@ -28,20 +29,21 @@ class SecretCamera(cv2.VideoCapture, AsyncCamera):
     def is_opened(self) -> bool:
         return self.isOpened()
 
+    # def read(self, image=None):
+    #     return self.__ok, self.__frame
+    #
+    # def _read(self):
+    #     """
+    #     reads from the camera synchronously (similar to Readable.read), unsafe, not to use by the programmer
+    #     this method will usually simply call super(self, ReadableClass).read()
+    #
+    #     :return: tuple of bool (indicates if read was successful) and the frame (if successful, else None)
+    #     """
+    #     return cv2.VideoCapture.read(self)
+
     @staticmethod
     def __is_on_linux() -> bool:
         return platform.system() == 'Linux'
-
-    def manually_bound(self):
-        frame = self._read()
-        self.bbox = cv2.selectROI('feed', frame[1])
-
-    def _read(self, image=None):
-        return cv2.VideoCapture.read(self, image)
-
-    def read(self, image=None):
-        inp = self._read(image)
-        return inp[0], gbv.crop(inp[1], *self.bbox) if self.bbox is not None else inp[1]
 
     def set_exposure(self, exposure) -> bool:
         return False
