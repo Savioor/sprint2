@@ -37,7 +37,8 @@ class Led_Controller(object):
         time.sleep(Led_Controller.BLINK_TIME)
         for light in lights:
             self.turn_off(light)
-#        time.sleep(Led_Controller.BLINK_TIME)
+
+    #        time.sleep(Led_Controller.BLINK_TIME)
 
     def blinks(self, operations):
         for operation in operations:
@@ -46,8 +47,6 @@ class Led_Controller(object):
                 if int(light) == Led_Controller.ON:
                     lights.append(i)
             self.blink(lights)
-
-
 
 # led_controller = Led_Controller()
 # lights = range(8)
@@ -61,7 +60,7 @@ class Led_Controller(object):
 #     led_controller.turn_on(light)
 # led_controller.blinks(arr)
 
-#print(data_to_raw(check_usb(), 8))
+# print(data_to_raw(check_usb(), 8))
 # lights = range(8)
 # for light in lights:
 #     led_controller.turn_on(light)
