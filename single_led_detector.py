@@ -1,6 +1,6 @@
 import cv2
 from reciever import SecretCamera
-
+from multi_led_reader import MultiLedReader
 import gbvision as gbv
 
 # ColorThreshold([[176, 255], [198, 255], [155, 255]], 'RGB')
@@ -95,8 +95,10 @@ class CircleFindWrapper:
 
 
 def setup_stage(camera):
+    imgp = ImageProcessing(camera)
+    imgp.setup()
 
-    return None, None, None, None, None  # ret top bbox, bottom bbox, threshold, top reader, bottom reader
+    return imgp, MultiLedReader(), None  # ret ImageProcessing, top reader, bottom reader
 
 
 def wait_stage(proc, finder, top_reader, bot_reader):
@@ -139,6 +141,7 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader):
         ret.append(next)
 
         time.sleep(5.0/25.0)
+
 
     return ret
 
