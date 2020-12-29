@@ -6,7 +6,7 @@ FRAMES_PER_SECOND = 5
 LEN_OF_MSG_LENGTH = 6
 
 RARE_ASCII = "00011110"
-NEW_RARE = "00011110"
+NEW_RARE = "00011111"
 
 def _get_start_protocol(content, num_of_leds):
     start_segments = ['1' * num_of_leds]
@@ -44,7 +44,9 @@ def bmp_to_raw(file_path, num_of_leds):
     with open(file_path, "rb") as file:
         stream = file.read()
     content = textwrap.wrap(BitArray(stream).bin, num_of_leds)
-    start = _get_start_protocol(content, num_of_leds)
+    without_thrity = change_to_thirty(content)
+    finished_data = replace_repeats(without_thrity)
+    start = _get_start_protocol(finished_data, num_of_leds)
     return start + content
 
 
@@ -87,6 +89,3 @@ def data_to_raw(file_path, num_of_leds):
 def raw_to_data(byte_stream):
     decoded_msg = [chr(byte) for byte in byte_stream]
     return "".join(decoded_msg)
-
-
-data_to_raw(r"C:\Users\t8875881\Desktop\usb\secret.txt", 8)
