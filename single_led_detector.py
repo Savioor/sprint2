@@ -23,23 +23,20 @@ class ImageProcessing:
         self.window.open()
         self.erode_and_dialate_size = erode_and_dilate_size
         self.size = size
-        self.pipelines = {ImageProcessing.WHITE: None, ImageProcessing.RED: None}
+        self.pipelines = {ImageProcessing.WHITE: None}
         self.bbox_bounds = [[], []]
         self.current_original_frame = None
         self.current_cropped_frames = [None, None]
-        self.current_piped_frame = [None, None]
+        self.current_piped_frames = [None, None]
 
     def setup(self):
         self.next_frame()
         self.crop_init(0)
         self.crop_init(1)
         self.init_pipeline(ImageProcessing.WHITE)
-        self.init_pipeline(ImageProcessing.RED)
         cv2.destroyAllWindows()
 
     def camera_init(self):
-        # self.camera.set_exposure(-5)
-        # self.camera.resize(.1, .1)
         pass
 
     def crop_init(self, box_index):
@@ -69,14 +66,17 @@ class ImageProcessing:
         for i in range(len(self.bbox_bounds)):
             frame = gbv.crop(self.current_original_frame, *self.bbox_bounds[i])
             cropped_frames.append(cv2.resize(frame, self.size, interpolation=ImageProcessing.INTERPOLATION))
+        self.current_cropped_frames = cropped_frames
         return self.current_cropped_frames
 
     def get_piped_frames(self, color):
         piped_frames = []
         for frame in self.current_cropped_frames:
             piped_frames.append(self.pipelines[color](frame))
+        self.current_piped_frames = piped_frames
+        return piped_frames
 
-    def get_frame(self, color):
+    def get_frames(self, color):
         self.get_original_frame()
         self.get_cropped_frames()
         return self.get_piped_frames(color)
@@ -96,7 +96,7 @@ def main():
     # s = SecretCamera(SecretCamera.ARAZI)
     circle_finder = CircleFindWrapper()
     # camera = gbv.USBCamera(0)
-    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test3.avi")
+    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test4.avi")
     # camera = s
     imgp = ImageProcessing(camera)
     imgp.setup()
@@ -114,18 +114,17 @@ def main():
             imgp.next_frame()
         except NotImplementedError:
             return
-        white_frame = imgp.get_frame(ImageProcessing.WHITE)
-        red_frame = imgp.get_frame(ImageProcessing.RED)
-        l_white, l_red = circle_finder.get_count(white_frame, red_frame)
-        print("Whites: {}".format(l_white))
-        print("Reds: {}".format(l_red))
+        frame0, frame1 = imgp.get_frames(ImageProcessing.WHITE)
+        l_0, l_1 = circle_finder.get_count(frame0, frame1)
+        print("TOP: {}".format(l_0))
+        print("BOTTOM: {}".format(l_1))
 
-        cropped_frame = imgp.current_cropped_frame
-        if not original.show_frame(cropped_frame):
+        #cropped_frames = imgp.current_cropped_frames
+        if not original.show_frame(imgp.current_original_frame):
             break
-        if not white_filtered.show_frame(white_frame):
+        if not white_filtered.show_frame(frame0):
             break
-        if not red_filtered.show_frame(red_frame):
+        if not red_filtered.show_frame(frame1):
             break
 
 

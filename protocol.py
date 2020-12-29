@@ -1,4 +1,3 @@
-from huffman import huffman
 import textwrap
 from bitstring import BitArray
 
@@ -75,20 +74,20 @@ def data_to_raw(file_path, num_of_leds):
     return start + content + end
 
 
-def raw_to_data(byte_stream, num_of_leds):
+def raw_to_data(byte_stream):
     decoded_msg = [_bits2chr(byte) for byte in _decompress(_detect_error(byte_stream))]
     return "".join(decoded_msg)
 
 
-import random
-file_path = r"C:\Users\t8875881\Desktop\secret.txt"
-with open(file_path) as file:
-    print("".join(file.readlines()))
-raw_data = data_to_raw(file_path, NUM_OF_LEDS)
-print("Sending:",raw_data)
-noise_length = 8
-raw_data = ["".join([str(random.randint(0, 1)) for _ in range(NUM_OF_LEDS)]) for _ in range(noise_length)] + raw_data
-beginning = _identify_start(raw_data, NUM_OF_LEDS)
-msg_length, message = _get_msg_length(beginning)
-print("Got:", message)
-print(raw_to_data(message, NUM_OF_LEDS))
+# import random
+# file_path = r"C:\Users\t8875881\Desktop\secret.txt"
+# with open(file_path) as file:
+#     print("".join(file.readlines()))
+# raw_data = data_to_raw(file_path, NUM_OF_LEDS)
+# print("Sending:",raw_data)
+# noise_length = 8
+# raw_data = ["".join([str(random.randint(0, 1)) for _ in range(NUM_OF_LEDS)]) for _ in range(noise_length)] + raw_data
+# beginning = _identify_start(raw_data, NUM_OF_LEDS)
+# msg_length, message = _get_msg_length(beginning)
+# print("Got:", message)
+# print(raw_to_data(message))
