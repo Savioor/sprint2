@@ -3,14 +3,14 @@
 class MultiLedReader:
 
     def __init__(self, raw_led_locs):
-        raw_led_locs_by_x = sorted(raw_led_locs, key=lambda p: p[1])
+        raw_led_locs_by_x = sorted(raw_led_locs, key=lambda p: p[0])
         raw_led_locs_by_y = sorted(raw_led_locs, key=lambda p: p[1])
 
         diff_x = raw_led_locs_by_x[-1][0] - raw_led_locs_by_x[0][0]
-        diff_y =  raw_led_locs_by_y[-1][1] - raw_led_locs_by_y[0][1]
+        diff_y = raw_led_locs_by_y[-1][1] - raw_led_locs_by_y[0][1]
 
         locs_sorted = []
-        if diff_x > diff_y:
+        if diff_x > diff_y or True:
             locs_sorted = raw_led_locs_by_x
         else:
             locs_sorted = raw_led_locs_by_y
@@ -18,13 +18,14 @@ class MultiLedReader:
         self.start = locs_sorted[0]
         self.end = locs_sorted[-1]
         self.diff = (self.end[0] - self.start[0], self.end[1] - self.start[0])
-        self.shadows = [self.get_shadow(p) for p in locs_sorted]
+        self.shadows = [p[0] for p in locs_sorted]
 
     def get_shadow(self, point):
-        x = self.diff[0]
-        y = self.diff[1]
-        size = x*x + y*y
-        return (x*(point[0] - self.start[0]) + y*(point[1] - self.start[1]))/size
+        return point[0]
+        # x = self.diff[0]
+        # y = self.diff[1]
+        # size = x*x + y*y
+        # return (x*(point[0] - self.start[0]) + y*(point[1] - self.start[1]))/size
 
     def get_nearest(self, point):
         shadow = self.get_shadow(point)

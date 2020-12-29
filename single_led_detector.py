@@ -8,7 +8,7 @@ import time
 
 # ColorThreshold([[200, 255], [202, 255], [201, 255]], 'RGB') !!!WHITE ON BLACK!!!
 
-ERODE_AND_DIALATE_DEFAULT = 30
+ERODE_AND_DIALATE_DEFAULT = 0
 
 
 class ImageProcessing:
@@ -51,7 +51,7 @@ class ImageProcessing:
         bbox = cv2.selectROI('feed', self.current_cropped_frames[0])
         self.pipelines[color] = gbv.median_threshold(self.current_cropped_frames[0], ImageProcessing.STDV, bbox, 'RGB')
         print(self.pipelines[color])
-        self.pipelines[color] += gbv.ErodeAndDilate(self.erode_and_dialate_size)
+        self.pipelines[color] += gbv.Erode(self.erode_and_dialate_size) + gbv.Dilate(0)
         return self.pipelines[color]
 
     def next_frame(self):
@@ -108,14 +108,11 @@ def setup_stage(camera, circle_finder):
 
     reader1, reader2 = MultiLedReader(l_0), MultiLedReader(l_1)
 
-    for i in range(25*5):
-        imgp.next_frame()
-
     return imgp, reader1, reader2  # ret ImageProcessing, top reader, bottom reader
 
-
+SLEEP = 0.1
 def wait_stage(proc, finder, top_reader, bot_reader):
-    empty = True
+    empty = False
     while True:
         top, _ = proc.get_frames(ImageProcessing.WHITE)
         proc.next_frame()
@@ -125,28 +122,30 @@ def wait_stage(proc, finder, top_reader, bot_reader):
             break
         if len(c_top) == 0:
             empty = True
-    [proc.next_frame() for _ in range(8)]
 
-    top, bottom = proc.get_frames(ImageProcessing.WHITE)
-    show_images(top, bottom, proc.get_original_frame())
-    circ_top, circ_bot = finder.get_count(top, bottom)
+    while True:
+        time.sleep(SLEEP)
+        proc.next_frame()
+        top, bottom = proc.get_frames(ImageProcessing.WHITE)
+        show_images(top, bottom, proc.get_original_frame())
+        circ_top, circ_bot = finder.get_count(top, bottom)
 
-    next = 0
-    next_bin = ["0"] * 8
-    for cp in circ_top:
-        loc = 3 - top_reader.get_nearest(cp)
-        if next_bin[loc] == "1":
-            next_bin[loc] = "1"
-            next += 2 ** loc
-    for cb in circ_bot:
-        loc = 4 + 3 - bot_reader.get_nearest(cb)
-        if next_bin[loc] == "1":
-            next_bin[loc] = "1"
-            next += 2 ** loc
+        next = 0
+        next_bin = ["0"] * 8
+        for cp in circ_top:
+            loc = 4 + 3 - top_reader.get_nearest(cp)
+            if next_bin[loc] == "0":
+                next_bin[loc] = "1"
+                next += 2 ** loc
+        for cb in circ_bot:
+            loc = 3 - bot_reader.get_nearest(cb)
+            if next_bin[loc] == "0":
+                next_bin[loc] = "1"
+                next += 2 ** loc
 
-    [proc.next_frame() for _ in range(6)]
+        if next != 255:
+            return next
 
-    return next  # returns message length when signal start
 
 
 original = gbv.FeedWindow(window_name='feed')
@@ -156,6 +155,59 @@ def show_images(frame0, frame1, org):
     white_filtered.show_frame(frame0)
     red_filtered.show_frame(frame1)
     original.show_frame(org)
+
+
+SECERT = 30
+def read_stage_2(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
+    ret = []
+    prev = None
+    prevprev = None
+    count = 0
+    did_once = False
+    reps = 0
+
+    while count < bytes_c:
+        time.sleep(SLEEP)
+        proc.next_frame()
+        top, bottom = proc.get_frames(ImageProcessing.WHITE)
+        show_images(top, bottom, proc.get_original_frame())
+        circ_top, circ_bot = finder.get_count(top, bottom)
+
+        curr = 0
+        next_bin = ["0"] * 8
+        for cp in circ_top:
+            loc = 4 + 3 - top_reader.get_nearest(cp)
+            if next_bin[loc] != "1":
+                next_bin[loc] = "1"
+                curr += 2 ** loc
+        for cb in circ_bot:
+            loc = 3 - bot_reader.get_nearest(cb)
+            if next_bin[loc] != "1":
+                next_bin[loc] = "1"
+                curr += 2 ** loc
+
+        if not did_once and curr == bytes_c:
+            continue
+        elif not did_once:
+            did_once = True
+
+        if prev is None:
+            prev = curr
+            prevprev = curr
+        elif prev != curr:
+            if curr == SECERT:
+                ret.append(prevprev)
+            else:
+                ret.append(prev)
+                print(chr(prev), reps)
+            count += 1
+            prevprev = prev
+            prev = curr
+            reps = 0
+        else:
+            reps += 1
+
+    return ret
 
 
 def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
@@ -169,12 +221,12 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
         next = 0
         next_bin = ["0"] * 8
         for cp in circ_top:
-            loc = 3 - top_reader.get_nearest(cp)
+            loc = 4 + top_reader.get_nearest(cp)
             if next_bin[loc] != "1":
                 next_bin[loc] = "1"
                 next += 2 ** loc
         for cb in circ_bot:
-            loc = 4 + 3 - bot_reader.get_nearest(cb)
+            loc = bot_reader.get_nearest(cb)
             if next_bin[loc] != "1":
                 next_bin[loc] = "1"
                 next += 2 ** loc
@@ -184,14 +236,14 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
         print(next)
         ret.append(next)
 
-        [proc.next_frame() for _ in range(6)]
+        [proc.next_frame() for _ in range(8)]
 
     return ret
 
 
 def read_secret(video_mode=False):
-    # camera = gbv.USBCamera(SecretCamera.DANIEL)
-    camera = gbv.USBCamera(r"total_test5.avi")
+    camera = gbv.USBCamera(SecretCamera.DANIEL)
+    # camera = gbv.USBCamera(r"final9-03.avi")
     # camera = cv2.VideoCapture.self(SecretCamera.DANIEL)
     # camera = gbv.AsyncUSBCamera(SecretCamera.DANIEL)
     # camera.wait_start_reading()
@@ -204,7 +256,7 @@ def read_secret(video_mode=False):
     leng = wait_stage(proc, circle_finder, reader_top, reader_bot)
     print(leng)
 
-    secret = read_stage(proc, circle_finder, leng, reader_top, reader_bot, video_mode)
+    secret = read_stage_2(proc, circle_finder, leng, reader_top, reader_bot, video_mode)
     print(secret)
 
 
