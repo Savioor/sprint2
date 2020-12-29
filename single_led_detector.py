@@ -4,91 +4,104 @@ from reciever import SecretCamera
 
 import gbvision as gbv
 
-s = SecretCamera(SecretCamera.DANIEL)
+s = SecretCamera(SecretCamera.ARAZI)
 
 # ColorThreshold([[176, 255], [198, 255], [155, 255]], 'RGB')
 
 # ColorThreshold([[200, 255], [202, 255], [201, 255]], 'RGB') !!!WHITE ON BLACK!!!
 
-stdv = np.array([50, 50, 50])
-stdv = 30
-
 
 class ImageProcessing:
     INTERPOLATION = cv2.INTER_CUBIC
     STDV = 50
+    WHITE = "WHITE"
+    RED = "RED"
 
     def __init__(self, camera):
         self.camera = camera
         self.camera_init()
         self.window = gbv.CameraWindow('feed', camera)
         self.window.open()
-        self.pipeline = None
+        self.pipelines = {ImageProcessing.WHITE: None, ImageProcessing.RED: None}
         self.bbox_bound = None
-        self.bbox_pipeline = None
         self.current_original_frame = None
         self.current_cropped_frame = None
         self.current_piped_frame = None
 
     def setup(self):
         self.crop_init()
-        self.init_pipeline()
+        self.init_pipeline(ImageProcessing.WHITE)
+        self.init_pipeline(ImageProcessing.RED)
         cv2.destroyAllWindows()
 
     def camera_init(self):
-        self.camera.set_exposure(-5)
-        self.camera.resize(.1, .1)
+        #self.camera.set_exposure(-5)
+        #self.camera.resize(.1, .1)
+        pass
 
     def crop_init(self):
         frame = self.get_original_frame()
         self.bbox_bound = cv2.selectROI('feed', frame)
 
-    def init_pipeline(self, *temp_args):
+    def init_pipeline(self, color):
         # pipeline = gbv.ColorThreshold([[0, 100], [0, 255], [0, 255]], 'HSV')
 
         self.get_cropped_frame()
         bbox = cv2.selectROI('feed', self.current_cropped_frame)
-        self.pipeline = gbv.median_threshold(self.current_cropped_frame, ImageProcessing.STDV, bbox, 'RGB')
-        print(self.pipeline)
-        # pipeline += gbv.ErodeAndDilate(2)
-        return self.pipeline
+        self.pipelines[color] = gbv.median_threshold(self.current_cropped_frame, ImageProcessing.STDV, bbox, 'RGB')
+        print(self.pipelines)
+        self.pipelines[color] += gbv.ErodeAndDilate(10)
+        return self.pipelines[color]
 
     def get_original_frame(self):
         ok, self.current_original_frame = self.camera.read()
+        if not ok:
+            raise NotImplementedError()
         return self.current_original_frame
 
     def get_cropped_frame(self):
         frame = gbv.crop(self.current_original_frame, *self.bbox_bound)
-        self.current_cropped_frame = cv2.resize(frame, (800, 800), interpolation=ImageProcessing.INTERPOLATION)
+        self.current_cropped_frame = cv2.resize(frame, (400, 400), interpolation=ImageProcessing.INTERPOLATION)
         return self.current_cropped_frame
 
-    def get_piped_frame(self):
-        return self.pipeline(self.current_cropped_frame)
+    def get_piped_frame(self, color):
+        return self.pipelines[color](self.current_cropped_frame)
 
-    def get_frame(self):
+    def get_frame(self, color):
         self.get_original_frame()
         self.get_cropped_frame()
-        return self.get_piped_frame()
-
+        return self.get_piped_frame(color)
 
 def main():
-    # camera = gbv.USBCamera(0)
-    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\record.avi")
+    camera = gbv.USBCamera(0)
+    #camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\white_led.avi")
+    #camera = s
     imgp = ImageProcessing(camera)
     imgp.setup()
 
     original = gbv.FeedWindow(window_name='original')
-    after_proc = gbv.FeedWindow(window_name='after threshold')
+    white_filtered = gbv.FeedWindow(window_name='white')
+    red_filtered = gbv.FeedWindow(window_name='red')
 
     original.open()
-    after_proc.open()
+    white_filtered.open()
+    red_filtered.open()
 
     while True:
-        after_frame = imgp.get_frame()
-        original_frame = imgp.current_cropped_frame
-        if not original.show_frame(original_frame):
+        white_frame = imgp.get_frame(ImageProcessing.WHITE)
+        red_frame = imgp.get_frame(ImageProcessing.RED)
+        cf = gbv.CircleFinder(gbv.EMPTY_PIPELINE, gbv.GameObject(1))
+        l_white = cf.find_shapes_unsorted(white_frame)
+        l_red = cf.find_shapes_unsorted(white_frame)
+        print(len(l_white))
+        print(len(l_red))
+
+        cropped_frame = imgp.current_cropped_frame
+        #if not original.show_frame(cropped_frame):
+        #    break
+        if not white_filtered.show_frame(white_frame):
             break
-        if not after_proc.show_frame(after_frame):
+        if not red_filtered.show_frame(red_frame):
             break
 
 
