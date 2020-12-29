@@ -89,6 +89,8 @@ class CircleFindWrapper:
     def get_count(self, white_frame, red_frame):
         l_white = self.circle_wrapper.find_shapes_unsorted(white_frame)
         l_red = self.circle_wrapper.find_shapes_unsorted(red_frame)
+        l_white = [(x[0][0],x[0][1]) for x in l_white]
+        l_red = [(x[0][0],x[0][1]) for x in l_red]
         return l_white, l_red
 
 
