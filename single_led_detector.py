@@ -2,6 +2,7 @@ import cv2
 from reciever import SecretCamera
 from multi_led_reader import MultiLedReader
 import gbvision as gbv
+import time
 
 # ColorThreshold([[176, 255], [198, 255], [155, 255]], 'RGB')
 
@@ -89,29 +90,46 @@ class CircleFindWrapper:
     def get_count(self, white_frame, red_frame):
         l_white = self.circle_wrapper.find_shapes_unsorted(white_frame)
         l_red = self.circle_wrapper.find_shapes_unsorted(red_frame)
-        l_white = [(x[0][0],x[0][1]) for x in l_white]
-        l_red = [(x[0][0],x[0][1]) for x in l_red]
+        l_white = [(x[0][0], x[0][1]) for x in l_white]
+        l_red = [(x[0][0], x[0][1]) for x in l_red]
         return l_white, l_red
 
 
-def setup_stage(camera):
+def setup_stage(camera, circle_finder):
     imgp = ImageProcessing(camera)
     imgp.setup()
 
-    return imgp, MultiLedReader(), None  # ret ImageProcessing, top reader, bottom reader
+    original.open()
+    white_filtered.open()
+    red_filtered.open()
+
+    frame0, frame1 = imgp.get_frames(ImageProcessing.WHITE)
+    l_0, l_1 = circle_finder.get_count(frame0, frame1)
+
+    reader1, reader2 = MultiLedReader(l_0), MultiLedReader(l_1)
+
+    for i in range(25*5):
+        imgp.next_frame()
+
+    return imgp, reader1, reader2  # ret ImageProcessing, top reader, bottom reader
 
 
 def wait_stage(proc, finder, top_reader, bot_reader):
-
+    empty = True
     while True:
-        top, _ = proc.get_frames()
-        c_top = finder.get_count(top)
-        if len(c_top) > 0:
+        top, _ = proc.get_frames(ImageProcessing.WHITE)
+        proc.next_frame()
+        show_images(top, _, proc.get_original_frame())
+        c_top, _ = finder.get_count(top, _)
+        if len(c_top) > 0 and empty:
             break
-    time.sleep(8.0/25.0)
+        if len(c_top) == 0:
+            empty = True
+    [proc.next_frame() for _ in range(8)]
 
-    top, bottom = proc.get_frames()
-    circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
+    top, bottom = proc.get_frames(ImageProcessing.WHITE)
+    show_images(top, bottom, proc.get_original_frame())
+    circ_top, circ_bot = finder.get_count(top, bottom)
 
     next = 0
     for cp in circ_top:
@@ -119,43 +137,76 @@ def wait_stage(proc, finder, top_reader, bot_reader):
     for cb in circ_bot:
         next += 2 ** (4 + bot_reader.get_nearest(cb))
 
-    time.sleep(5.0/25.0)
+    [proc.next_frame() for _ in range(5)]
 
     return next  # returns message length when signal start
 
 
-def read_stage(proc, finder, bytes_c, top_reader, bot_reader):
+original = gbv.FeedWindow(window_name='feed')
+white_filtered = gbv.FeedWindow(window_name='white')
+red_filtered = gbv.FeedWindow(window_name='red')
+def show_images(frame0, frame1, org):
+    white_filtered.show_frame(frame0)
+    red_filtered.show_frame(frame1)
+    original.show_frame(org)
 
+
+def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
     ret = []
     for i in range(bytes_c):
-        top, bottom = proc.get_frames()
-        circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
+        proc.next_frame()
+        top, bottom = proc.get_frames(ImageProcessing.WHITE)
+        show_images(top, bottom, proc.get_original_frame())
+        circ_top, circ_bot = finder.get_count(top, bottom)
 
         next = 0
-
+        next_bin = ["0"] * 8
         for cp in circ_top:
+            next_bin[top_reader.get_nearest(cp)] = "1"
             next += 2 ** (top_reader.get_nearest(cp))
         for cb in circ_bot:
+            next_bin[4 + top_reader.get_nearest(cb)] = "1"
             next += 2 ** (4 + bot_reader.get_nearest(cb))
 
+        print(next_bin)
+
+        print(next)
         ret.append(next)
 
-        time.sleep(5.0/25.0)
-
+        [proc.next_frame() for _ in range(5)]
 
     return ret
+
+
+def read_secret(video_mode=False):
+    # camera = gbv.USBCamera(SecretCamera.DANIEL)
+    camera = gbv.USBCamera(r"total_test5.avi")
+    # camera = cv2.VideoCapture.self(SecretCamera.DANIEL)
+    # camera = gbv.AsyncUSBCamera(SecretCamera.DANIEL)
+    # camera.wait_start_reading()
+    circle_finder = CircleFindWrapper()
+
+    proc, reader_top, reader_bot = setup_stage(camera, circle_finder)
+
+    input("press enter")
+
+    leng = wait_stage(proc, circle_finder, reader_top, reader_bot)
+    print(leng)
+
+    secret = read_stage(proc, circle_finder, leng, reader_top, reader_bot, video_mode)
+    print(secret)
 
 
 def main():
     # s = SecretCamera(SecretCamera.ARAZI)
     circle_finder = CircleFindWrapper()
     # camera = gbv.USBCamera(0)
-    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test4.avi")
+    # camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test4.avi")
     # camera = s
-    imgp = ImageProcessing(camera)
+    # imgp = ImageProcessing(camera)
     imgp.setup()
 
-    original = gbv.FeedWindow(window_name='original')
+    original = gbv.FeedWindow(window_name='feed')
     white_filtered = gbv.FeedWindow(window_name='white')
     red_filtered = gbv.FeedWindow(window_name='red')
 
@@ -173,7 +224,7 @@ def main():
         print("TOP: {}".format(l_0))
         print("BOTTOM: {}".format(l_1))
 
-        #cropped_frames = imgp.current_cropped_frames
+        # cropped_frames = imgp.current_cropped_frames
         if not original.show_frame(imgp.current_original_frame):
             break
         if not white_filtered.show_frame(frame0):
@@ -183,4 +234,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        read_secret()
+    except Exception:
+        pass
