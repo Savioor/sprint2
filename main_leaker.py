@@ -2,66 +2,29 @@ import os
 from time import sleep
 from threading import Thread
 
-from protocol import data_to_raw
+from protocol import data_to_raw, bmp_to_raw
 from finding_file import find
 from led_controller import Led_Controller
-
-is_processing = False
-
-
-def leak_from_usb(led_controller):
-    global is_processing
-    arr = data_to_raw(find(), len(Led_Controller.PINS))
-    wait_until_not_processing()
-    is_processing = True
-    led_controller.blinks(arr)
-    is_processing = False
-
-
-def wait_until_not_processing():
-    global is_processing
-    if is_processing:
-        print("Other leak is already running, I am wa")
-    while is_processing:
-        sleep(0.01)
-
-
-def leak_txt_file(file_path):
-    pass
-
-
-def leak_bmp_file(file_path):
-    pass
-
-
-def leak_file():
-    global is_processing
-    file_path = input()
-    while not os.path.isfile(file_path) and not file_path[:-4] not in (".txt", ".bmp"):
-        print("Cannot open file.")
-        file_path = input("Try Again:")
-    wait_until_not_processing()
-    is_processing = True
-    if file_path[:-4] == ".txt":
-        leak_txt_file(file_path)
-    else:
-        leak_bmp_file(file_path)
-    is_processing = False
-
-
-
 
 
 def main():
     led_controller = Led_Controller()
-    lights = range(len(led_controller.PINS))
+    lights = range(8)
     for light in lights:
         led_controller.turn_on(light)
-    input()
-    for light in lights:
-        led_controller.turn_off(light)
-    print("Inset USB to leak it, input path of file to leak it")
-    usb_leaker_thread = Thread(target=leak_from_usb)
-    usb_leaker_thread.start()
-    file_leaker_thread = Thread(target=leak_file)
-    file_leaker_thread.start()
+    input("Press Enter to Turn lights off")
+    root, files_to_transfer = find()
+    print("Found files.", "Transferring", root + '\\' + files_to_transfer[0])
+    for i in range(len(files_to_transfer)):
+        arr = []
+        if files_to_transfer[i][-4:] == ".bmp":
+            arr = bmp_to_raw(root + '\\' + files_to_transfer[i], len(Led_Controller.PINS))
+        elif files_to_transfer[i][-4:] == ".txt":
+            arr = data_to_raw(root + '\\' + files_to_transfer[i], len(Led_Controller.PINS))
+        led_controller.blinks(arr)
+        if i < len(files_to_transfer) - 1:
+            input("Press Enter to transfer: " + root + '\\' + files_to_transfer[i + 1])
+
+
+if __name__ == '__main__':
+    main()

@@ -49,17 +49,17 @@ class Led_Controller(object):
 
 
 
-led_controller = Led_Controller()
-lights = range(8)
-for light in lights:
-     led_controller.turn_on(light)
-arr = data_to_raw(find(), len(Led_Controller.PINS))
-print(arr)
-#  def __del__(self):
-# self.__ser.close()
-for light in lights:
-    led_controller.turn_on(light)
-led_controller.blinks(arr)
+# led_controller = Led_Controller()
+# lights = range(8)
+# for light in lights:
+#      led_controller.turn_on(light)
+# arr = data_to_raw(find(), len(Led_Controller.PINS))
+# print(arr)
+# #  def __del__(self):
+# # self.__ser.close()
+# for light in lights:
+#     led_controller.turn_on(light)
+# led_controller.blinks(arr)
 
 #print(data_to_raw(check_usb(), 8))
 # lights = range(8)
