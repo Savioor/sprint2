@@ -132,12 +132,19 @@ def wait_stage(proc, finder, top_reader, bot_reader):
     circ_top, circ_bot = finder.get_count(top, bottom)
 
     next = 0
+    next_bin = ["0"] * 8
     for cp in circ_top:
-        next += 2 ** (top_reader.get_nearest(cp))
+        loc = 3 - top_reader.get_nearest(cp)
+        if next_bin[loc] == "1":
+            next_bin[loc] = "1"
+            next += 2 ** loc
     for cb in circ_bot:
-        next += 2 ** (4 + bot_reader.get_nearest(cb))
+        loc = 4 + 3 - bot_reader.get_nearest(cb)
+        if next_bin[loc] == "1":
+            next_bin[loc] = "1"
+            next += 2 ** loc
 
-    [proc.next_frame() for _ in range(5)]
+    [proc.next_frame() for _ in range(6)]
 
     return next  # returns message length when signal start
 
@@ -162,18 +169,22 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
         next = 0
         next_bin = ["0"] * 8
         for cp in circ_top:
-            next_bin[top_reader.get_nearest(cp)] = "1"
-            next += 2 ** (top_reader.get_nearest(cp))
+            loc = 3 - top_reader.get_nearest(cp)
+            if next_bin[loc] != "1":
+                next_bin[loc] = "1"
+                next += 2 ** loc
         for cb in circ_bot:
-            next_bin[4 + top_reader.get_nearest(cb)] = "1"
-            next += 2 ** (4 + bot_reader.get_nearest(cb))
+            loc = 4 + 3 - bot_reader.get_nearest(cb)
+            if next_bin[loc] != "1":
+                next_bin[loc] = "1"
+                next += 2 ** loc
 
         print(next_bin)
 
         print(next)
         ret.append(next)
 
-        [proc.next_frame() for _ in range(5)]
+        [proc.next_frame() for _ in range(6)]
 
     return ret
 
@@ -234,7 +245,5 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        read_secret()
-    except Exception:
-        pass
+    read_secret()
+
