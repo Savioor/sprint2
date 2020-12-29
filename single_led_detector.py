@@ -92,6 +92,32 @@ class CircleFindWrapper:
         return l_white, l_red
 
 
+def setup_stage(camera):
+
+    return None, None, None, None, None  # ret top bbox, bottom bbox, threshold, top reader, bottom reader
+
+
+def wait_stage(proc, finder, top_reader, bot_reader):
+
+    return 0  # returns message length when signal start
+
+
+def read_stage(proc, finder, bytes_c, top_reader, bot_reader):
+
+    ret = []
+    for i in range(bytes_c):
+        top, bottom = proc.get_frames()
+        circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
+
+        power = 0
+
+        for cp in circ_top:
+
+
+        time.sleep(6.0/25.0)
+
+    pass
+
 def main():
     # s = SecretCamera(SecretCamera.ARAZI)
     circle_finder = CircleFindWrapper()
