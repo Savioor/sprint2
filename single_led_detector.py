@@ -92,7 +92,8 @@ def main():
 
 def main2():
     # camera = gbv.USBCamera(0)
-    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\green_led.avi")
+    # camera = gbv.USBCamera(r"total_test.avi")
+    camera = SecretCamera(SecretCamera.DANIEL)
     camera.set_exposure(-5)
     camera.resize(.1, .1)
     window = gbv.CameraWindow('feed', camera)
@@ -101,26 +102,19 @@ def main2():
     frame = window.show_and_get_frame()
     bbox_bound = cv2.selectROI('feed', frame)
 
-    interpol = cv2.INTER_CUBIC
+    interpol = cv2.INTER_LINEAR
 
     frame = gbv.crop(window.show_and_get_frame(), *bbox_bound)
-    frame = cv2.resize(frame, (1000, 1000), interpolation=interpol)
+
+    frame = cv2.resize(frame, (bbox_bound[0]*6, bbox_bound[1]*2), interpolation=interpol)
 
     cv2.destroyAllWindows()
 
-    original = gbv.FeedWindow(window_name='original')
-
     while True:
-        ok, frame = camera.read()
-        frame = gbv.crop(frame, *bbox_bound)
-        frame = cv2.resize(frame, (800, 800), interpolation=interpol)
-        original.show_frame(frame)
-        k = original.last_key_pressed
-        if k == 'r':
-            bbox = cv2.selectROI('original', frame)
-            pipeline = get_pipeline(frame, stdv, bbox, 'RGB')
-            # thr = gbv.ColorThreshold([[0,100], [0,255], [0,255]], 'HSV')
-            break
+        bbox = cv2.selectROI('original', frame)
+        pipeline = get_pipeline(frame, stdv, bbox, 'RGB')
+        break
+
     cv2.destroyAllWindows()
 
     print(pipeline)
@@ -133,7 +127,7 @@ def main2():
     while True:
         ok, frame = camera.read()
         frame = gbv.crop(frame, *bbox_bound)
-        frame = cv2.resize(frame, (800, 800), interpolation=interpol)
+        frame = cv2.resize(frame, (bbox_bound[0]*5, bbox_bound[1]*5), interpolation=interpol)
         if not original.show_frame(frame):
             break
         if not after_proc.show_frame(frame):
@@ -144,4 +138,4 @@ def main2():
 
 
 if __name__ == '__main__':
-    main()
+    main2()
