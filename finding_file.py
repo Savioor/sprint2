@@ -26,7 +26,5 @@ def _check_usb():
 def find():
     path = _check_usb()
     for root, dirs, files in os.walk(path):
-        for file in files:
-            if "txt" in file:
-                secret_file_name = file
-                return (root + "\\" + secret_file_name)
+        files.sort(key=lambda f: os.stat(f).st_size, reverse=True)
+        return root, files[0]
