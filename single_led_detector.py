@@ -10,18 +10,21 @@ s = SecretCamera(SecretCamera.ARAZI)
 
 # ColorThreshold([[200, 255], [202, 255], [201, 255]], 'RGB') !!!WHITE ON BLACK!!!
 
+ERODE_AND_DIALATE_DEFAULT = 30
 
 class ImageProcessing:
     INTERPOLATION = cv2.INTER_CUBIC
-    STDV = 50
+    STDV = 45
     WHITE = "WHITE"
     RED = "RED"
 
-    def __init__(self, camera):
+    def __init__(self, camera, erode_and_dilate_size=ERODE_AND_DIALATE_DEFAULT, size=(1000,1000)):
         self.camera = camera
         self.camera_init()
         self.window = gbv.CameraWindow('feed', camera)
         self.window.open()
+        self.erode_and_dialate_size = erode_and_dilate_size
+        self.size = size
         self.pipelines = {ImageProcessing.WHITE: None, ImageProcessing.RED: None}
         self.bbox_bound = None
         self.current_original_frame = None
@@ -50,8 +53,8 @@ class ImageProcessing:
         self.get_cropped_frame()
         bbox = cv2.selectROI('feed', self.current_cropped_frame)
         self.pipelines[color] = gbv.median_threshold(self.current_cropped_frame, ImageProcessing.STDV, bbox, 'RGB')
-        print(self.pipelines)
-        self.pipelines[color] += gbv.ErodeAndDilate(20)
+        print(self.pipelines[color])
+        self.pipelines[color] += gbv.ErodeAndDilate(self.erode_and_dialate_size)
         return self.pipelines[color]
 
     def next_frame(self):
@@ -64,7 +67,7 @@ class ImageProcessing:
 
     def get_cropped_frame(self):
         frame = gbv.crop(self.current_original_frame, *self.bbox_bound)
-        self.current_cropped_frame = cv2.resize(frame, (1000, 1000), interpolation=ImageProcessing.INTERPOLATION)
+        self.current_cropped_frame = cv2.resize(frame, self.size, interpolation=ImageProcessing.INTERPOLATION)
         return self.current_cropped_frame
 
     def get_piped_frame(self, color):
@@ -75,9 +78,21 @@ class ImageProcessing:
         self.get_cropped_frame()
         return self.get_piped_frame(color)
 
+class CircleFindWrapper:
+    def __init__(self):
+        self.circle_wrapper = gbv.CircleFinder(gbv.EMPTY_PIPELINE, gbv.GameObject(1))
+
+    def get_count(self, white_frame, red_frame):
+        l_white = self.circle_wrapper.find_shapes_unsorted(white_frame)
+        l_red = self.circle_wrapper.find_shapes_unsorted(red_frame)
+        return l_white, l_red
+
 def main():
+
+    circle_finder = CircleFindWrapper()
+
     #camera = gbv.USBCamera(0)
-    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test.avi")
+    camera = gbv.USBCamera(r"C:\Users\t8854535\Desktop\sprint2\test_data\total_test3.avi")
     #camera = s
     imgp = ImageProcessing(camera)
     imgp.setup()
@@ -97,11 +112,9 @@ def main():
             return
         white_frame = imgp.get_frame(ImageProcessing.WHITE)
         red_frame = imgp.get_frame(ImageProcessing.RED)
-        cf = gbv.CircleFinder(gbv.EMPTY_PIPELINE, gbv.GameObject(1))
-        l_white = cf.find_shapes_unsorted(white_frame)
-        l_red = cf.find_shapes_unsorted(white_frame)
-        print("Whites : {}".format(len(l_white)))
-        print("Reds : {}".format(len(l_red)))
+        l_white, l_red = circle_finder.get_count(white_frame, red_frame)
+        print("Whites: {}".format(l_white))
+        print("Reds: {}".format(l_red))
 
         cropped_frame = imgp.current_cropped_frame
         if not original.show_frame(cropped_frame):
@@ -113,4 +126,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main2()
+    main()
