@@ -5,7 +5,7 @@ from reciever import SecretCamera
 
 def main():
     camera = SecretCamera(SecretCamera.DANIEL)
-    window = gbv.RecordingCameraWindow(window_name='camera example', wrap_object=camera, file_name='record.avi',
+    window = gbv.RecordingCameraWindow(window_name='camera example', wrap_object=camera, file_name='test_data/record.avi',
                                        fps=camera.get_fps())
     window.show()
     camera.release()
