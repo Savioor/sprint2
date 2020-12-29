@@ -101,7 +101,25 @@ def setup_stage(camera):
 
 def wait_stage(proc, finder, top_reader, bot_reader):
 
-    return 0  # returns message length when signal start
+    while True:
+        top, _ = proc.get_frames()
+        c_top = finder.get_count(top)
+        if len(c_top) > 0:
+            break
+    time.sleep(8.0/25.0)
+
+    top, bottom = proc.get_frames()
+    circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
+
+    next = 0
+    for cp in circ_top:
+        next += 2 ** (top_reader.get_nearest(cp))
+    for cb in circ_bot:
+        next += 2 ** (4 + bot_reader.get_nearest(cb))
+
+    time.sleep(5.0/25.0)
+
+    return next  # returns message length when signal start
 
 
 def read_stage(proc, finder, bytes_c, top_reader, bot_reader):
@@ -111,14 +129,19 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader):
         top, bottom = proc.get_frames()
         circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
 
-        power = 0
+        next = 0
 
         for cp in circ_top:
+            next += 2 ** (top_reader.get_nearest(cp))
+        for cb in circ_bot:
+            next += 2 ** (4 + bot_reader.get_nearest(cb))
 
+        ret.append(next)
 
-        time.sleep(6.0/25.0)
+        time.sleep(5.0/25.0)
 
-    pass
+    return ret
+
 
 def main():
     # s = SecretCamera(SecretCamera.ARAZI)
