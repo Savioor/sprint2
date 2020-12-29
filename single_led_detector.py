@@ -1,6 +1,6 @@
 import cv2
 from reciever import SecretCamera
-
+from multi_led_reader import MultiLedReader
 import gbvision as gbv
 
 # ColorThreshold([[176, 255], [198, 255], [155, 255]], 'RGB')
@@ -92,6 +92,58 @@ class CircleFindWrapper:
         l_white = [(x[0][0],x[0][1]) for x in l_white]
         l_red = [(x[0][0],x[0][1]) for x in l_red]
         return l_white, l_red
+
+
+def setup_stage(camera):
+    imgp = ImageProcessing(camera)
+    imgp.setup()
+
+    return imgp, MultiLedReader(), None  # ret ImageProcessing, top reader, bottom reader
+
+
+def wait_stage(proc, finder, top_reader, bot_reader):
+
+    while True:
+        top, _ = proc.get_frames()
+        c_top = finder.get_count(top)
+        if len(c_top) > 0:
+            break
+    time.sleep(8.0/25.0)
+
+    top, bottom = proc.get_frames()
+    circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
+
+    next = 0
+    for cp in circ_top:
+        next += 2 ** (top_reader.get_nearest(cp))
+    for cb in circ_bot:
+        next += 2 ** (4 + bot_reader.get_nearest(cb))
+
+    time.sleep(5.0/25.0)
+
+    return next  # returns message length when signal start
+
+
+def read_stage(proc, finder, bytes_c, top_reader, bot_reader):
+
+    ret = []
+    for i in range(bytes_c):
+        top, bottom = proc.get_frames()
+        circ_top, circ_bot = finder.get_count(top), finder.get_count(bottom)
+
+        next = 0
+
+        for cp in circ_top:
+            next += 2 ** (top_reader.get_nearest(cp))
+        for cb in circ_bot:
+            next += 2 ** (4 + bot_reader.get_nearest(cb))
+
+        ret.append(next)
+
+        time.sleep(5.0/25.0)
+
+
+    return ret
 
 
 def main():
