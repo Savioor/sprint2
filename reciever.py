@@ -5,7 +5,7 @@ import cv2
 import platform
 
 
-class SecretCamera(cv2.VideoCapture, Camera):
+class SecretCamera(cv2.VideoCapture, AsyncCamera):
     """
     a basic usb connected camera which inherits from cv2 VideoCapture
 
