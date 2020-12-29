@@ -47,7 +47,7 @@ def bmp_to_raw(file_path, num_of_leds):
     without_thrity = change_to_thirty(content)
     finished_data = replace_repeats(without_thrity)
     start = _get_start_protocol(finished_data, num_of_leds)
-    return start + content
+    return finished_data + content
 
 
 def raw_to_bmp(byte_stream):
@@ -89,3 +89,6 @@ def data_to_raw(file_path, num_of_leds):
 def raw_to_data(byte_stream):
     decoded_msg = [chr(byte) for byte in byte_stream]
     return "".join(decoded_msg)
+
+
+a = bmp_to_raw(r"C:\Users\t8875881\Desktop\usb\secret_img.bmp", 8)
