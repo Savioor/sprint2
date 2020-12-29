@@ -38,6 +38,21 @@ def _get_msg_length(byte_stream):
     return length, msg
 
 
+def bmp_to_raw(file_path, num_of_leds):
+    with open(file_path, "rb") as file:
+        stream = file.read()
+    content = textwrap.wrap(BitArray(stream).bin, num_of_leds)
+    start = _get_start_protocol(content, num_of_leds)
+    return start + content
+
+
+def raw_to_bmp(byte_stream):
+    hexed_data = [bytes([byte]) for byte in byte_stream]
+    with open("leaked_img.bmp", 'wb') as file:
+        for h in hexed_data:
+            file.write(h)
+
+
 def data_to_raw(file_path, num_of_leds):
     content = _split_bytes(_read_file(file_path), NUM_OF_LEDS)
     start = _get_start_protocol(content, num_of_leds)
@@ -47,4 +62,3 @@ def data_to_raw(file_path, num_of_leds):
 def raw_to_data(byte_stream):
     decoded_msg = [chr(byte) for byte in byte_stream]
     return "".join(decoded_msg)
-
