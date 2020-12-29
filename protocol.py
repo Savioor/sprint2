@@ -74,7 +74,7 @@ def data_to_raw(file_path, num_of_leds):
     return start + content + end
 
 
-def raw_to_data(byte_stream, num_of_leds):
+def raw_to_data(byte_stream):
     decoded_msg = [_bits2chr(byte) for byte in _decompress(_detect_error(byte_stream))]
     return "".join(decoded_msg)
 
@@ -90,4 +90,4 @@ def raw_to_data(byte_stream, num_of_leds):
 # beginning = _identify_start(raw_data, NUM_OF_LEDS)
 # msg_length, message = _get_msg_length(beginning)
 # print("Got:", message)
-# print(raw_to_data(message, NUM_OF_LEDS))
+# print(raw_to_data(message))

@@ -11,7 +11,7 @@ dl = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 drives = ['%s:' % d for d in dl if os.path.exists('%s:' % d)]
 
 
-def check_usb():
+def _check_usb():
     global drives
     while True:
         uncheckeddrives = ['%s:' % d for d in dl if os.path.exists('%s:' % d)]
@@ -24,7 +24,7 @@ def check_usb():
 
 
 def find():
-    path = check_usb()
+    path = _check_usb()
     for root, dirs, files in os.walk(path):
         for file in files:
             if "txt" in file:
