@@ -13,17 +13,17 @@ def main():
     for light in lights:
         led_controller.turn_on(light)
     input("Press Enter to Turn lights off")
-    root, files_to_transfer = find()
-    print("Found files.", "Transferring", root + '\\' + files_to_transfer[0])
+    files_to_transfer = find()
+    print("Found files.", "Transferring", files_to_transfer[0])
     for i in range(len(files_to_transfer)):
         arr = []
         if files_to_transfer[i][-4:] == ".bmp":
-            arr = bmp_to_raw(root + '\\' + files_to_transfer[i], len(Led_Controller.PINS))
+            arr = bmp_to_raw(files_to_transfer[i], len(Led_Controller.PINS))
         elif files_to_transfer[i][-4:] == ".txt":
-            arr = data_to_raw(root + '\\' + files_to_transfer[i], len(Led_Controller.PINS))
+            arr = data_to_raw(files_to_transfer[i], len(Led_Controller.PINS))
         led_controller.blinks(arr)
         if i < len(files_to_transfer) - 1:
-            input("Press Enter to transfer: " + root + '\\' + files_to_transfer[i + 1])
+            input("Press Enter to transfer: " + files_to_transfer[i + 1])
 
 
 if __name__ == '__main__':

@@ -13,6 +13,7 @@ ERODE_AND_DIALATE_DEFAULT = 0
 ERODE_VAL_AAAA = 25
 
 
+
 class ImageProcessing:
     INTERPOLATION = cv2.INTER_CUBIC
     STDV = 45
@@ -54,6 +55,7 @@ class ImageProcessing:
         self.pipelines[color] = gbv.median_threshold(self.current_cropped_frames[0], ImageProcessing.STDV, bbox, 'RGB')
         print(self.pipelines[color])
         self.pipelines[color] += gbv.Erode(ERODE_VAL_AAAA) + gbv.Dilate(0)
+
         return self.pipelines[color]
 
     def next_frame(self):
@@ -150,6 +152,7 @@ def wait_stage(proc, finder, top_reader, bot_reader):
 
 
 
+
 original = gbv.FeedWindow(window_name='feed')
 white_filtered = gbv.FeedWindow(window_name='white')
 red_filtered = gbv.FeedWindow(window_name='red')
@@ -224,6 +227,7 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
         next_bin = ["0"] * 8
         for cp in circ_top:
             loc = 4 + top_reader.get_nearest(cp)
+
             if next_bin[loc] != "1":
                 next_bin[loc] = "1"
                 next += 2 ** loc
@@ -233,9 +237,13 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
                 next_bin[loc] = "1"
                 next += 2 ** loc
 
-        print(next_bin)
+        print((next_bin))
 
         print(next)
+        try:
+            print(chr(next))
+        except:
+            pass
         ret.append(next)
 
         [proc.next_frame() for _ in range(8)]
@@ -244,6 +252,7 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
 
 
 def read_secret(camera, circle_finder, proc, reader_top, reader_bot, video_mode=False):
+
     leng = wait_stage(proc, circle_finder, reader_top, reader_bot)
     print(leng)
 
