@@ -16,6 +16,7 @@ class SecretCamera(cv2.VideoCapture, AsyncCamera):
 
     ARAZI = "http://132.64.143.185:5000/video_feed"
     DANIEL = "http://132.64.143.105:5000/video_feed"
+    HELP = "http://132.64.143.144:5000/video_feed"
 
     def __init__(self, address: str, data: CameraData = UNKNOWN_CAMERA):
         """

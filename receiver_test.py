@@ -5,10 +5,10 @@ from reciever import SecretCamera
 
 
 def main():
-    camera = gbv.USBCamera(SecretCamera.DANIEL)
+    camera = gbv.USBCamera(SecretCamera.HELP)
     print(camera.get_fps())  # fps = 25
     window = gbv.RecordingCameraWindow(window_name='camera example', wrap_object=camera,
-                                       file_name='final10-03.avi',
+                                       file_name='aaaaa.avi',
                                        fps=6)
     window.show()
     camera.release()

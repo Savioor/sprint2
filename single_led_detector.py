@@ -10,6 +10,7 @@ import time
 # ColorThreshold([[200, 255], [202, 255], [201, 255]], 'RGB') !!!WHITE ON BLACK!!!
 
 ERODE_AND_DIALATE_DEFAULT = 0
+ERODE_VAL_AAAA = 25
 
 
 class ImageProcessing:
@@ -52,7 +53,7 @@ class ImageProcessing:
         bbox = cv2.selectROI('feed', self.current_cropped_frames[0])
         self.pipelines[color] = gbv.median_threshold(self.current_cropped_frames[0], ImageProcessing.STDV, bbox, 'RGB')
         print(self.pipelines[color])
-        self.pipelines[color] += gbv.Erode(self.erode_and_dialate_size) + gbv.Dilate(0)
+        self.pipelines[color] += gbv.Erode(ERODE_VAL_AAAA) + gbv.Dilate(0)
         return self.pipelines[color]
 
     def next_frame(self):
@@ -288,7 +289,7 @@ def main():
 
 
 if __name__ == '__main__':
-    camera = gbv.USBCamera(SecretCamera.DANIEL)
+    camera = gbv.USBCamera(SecretCamera.HELP)
     # camera = gbv.USBCamera(r"final9-03.avi")
     # camera = cv2.VideoCapture.self(SecretCamera.DANIEL)
     # camera = gbv.AsyncUSBCamera(SecretCamera.DANIEL)
