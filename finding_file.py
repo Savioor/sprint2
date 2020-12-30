@@ -25,6 +25,11 @@ def _check_usb():
 
 def find():
     path = _check_usb()
+    valid_files = []
     for root, dirs, files in os.walk(path):
-        files.sort(key=lambda f: os.stat(root + '\\' + f).st_size, reverse=True)
-        return root, list(reversed(files))
+        if len(root) < 3:
+            for file in files:
+                if file[-4:] in (".txt", ".bmp"):
+                    valid_files.append(root + "\\" + file)
+    valid_files.sort(key=lambda f: os.stat(f).st_size, reverse=True)
+    return list(reversed(valid_files))[1:]

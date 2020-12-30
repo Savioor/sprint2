@@ -8,7 +8,7 @@ import time
 
 # ColorThreshold([[200, 255], [202, 255], [201, 255]], 'RGB') !!!WHITE ON BLACK!!!
 
-ERODE_AND_DIALATE_DEFAULT = 30
+ERODE_AND_DIALATE_DEFAULT = 20
 
 
 class ImageProcessing:
@@ -52,6 +52,7 @@ class ImageProcessing:
         self.pipelines[color] = gbv.median_threshold(self.current_cropped_frames[0], ImageProcessing.STDV, bbox, 'RGB')
         print(self.pipelines[color])
         self.pipelines[color] += gbv.ErodeAndDilate(self.erode_and_dialate_size)
+        #self.pipelines[color] += gbv.Erode(self.erode_and_dialate_size)
         return self.pipelines[color]
 
     def next_frame(self):
@@ -115,7 +116,7 @@ def setup_stage(camera, circle_finder):
 
 
 def wait_stage(proc, finder, top_reader, bot_reader):
-    empty = True
+    empty = False
     while True:
         top, _ = proc.get_frames(ImageProcessing.WHITE)
         proc.next_frame()
@@ -125,7 +126,7 @@ def wait_stage(proc, finder, top_reader, bot_reader):
             break
         if len(c_top) == 0:
             empty = True
-    [proc.next_frame() for _ in range(8)]
+    [proc.next_frame() for _ in range(12)]
 
     top, bottom = proc.get_frames(ImageProcessing.WHITE)
     show_images(top, bottom, proc.get_original_frame())
@@ -135,16 +136,16 @@ def wait_stage(proc, finder, top_reader, bot_reader):
     next_bin = ["0"] * 8
     for cp in circ_top:
         loc = 3 - top_reader.get_nearest(cp)
-        if next_bin[loc] == "1":
+        if next_bin[loc] == "0":
             next_bin[loc] = "1"
             next += 2 ** loc
     for cb in circ_bot:
         loc = 4 + 3 - bot_reader.get_nearest(cb)
-        if next_bin[loc] == "1":
+        if next_bin[loc] == "0":
             next_bin[loc] = "1"
             next += 2 ** loc
 
-    [proc.next_frame() for _ in range(6)]
+    [proc.next_frame() for _ in range(8)]
 
     return next  # returns message length when signal start
 
@@ -169,29 +170,33 @@ def read_stage(proc, finder, bytes_c, top_reader, bot_reader, video_mode=False):
         next = 0
         next_bin = ["0"] * 8
         for cp in circ_top:
-            loc = 3 - top_reader.get_nearest(cp)
+            loc = 4 + 3-  top_reader.get_nearest(cp)
             if next_bin[loc] != "1":
                 next_bin[loc] = "1"
                 next += 2 ** loc
         for cb in circ_bot:
-            loc = 4 + 3 - bot_reader.get_nearest(cb)
+            loc = 3 - bot_reader.get_nearest(cb)
             if next_bin[loc] != "1":
                 next_bin[loc] = "1"
                 next += 2 ** loc
 
-        print(next_bin)
+        print((next_bin))
 
         print(next)
+        try:
+            print(chr(next))
+        except:
+            pass
         ret.append(next)
 
-        [proc.next_frame() for _ in range(6)]
+        [proc.next_frame() for _ in range(8)]
 
     return ret
 
 
 def read_secret(video_mode=False):
     # camera = gbv.USBCamera(SecretCamera.DANIEL)
-    camera = gbv.USBCamera(r"total_test5.avi")
+    camera = gbv.USBCamera(r"test_data\final5.avi")
     # camera = cv2.VideoCapture.self(SecretCamera.DANIEL)
     # camera = gbv.AsyncUSBCamera(SecretCamera.DANIEL)
     # camera.wait_start_reading()

@@ -3,9 +3,11 @@ import time
 
 from reciever import SecretCamera
 
+asd = r"http://132.64.143.144:5000/video_feed"
+
 
 def main():
-    camera = gbv.USBCamera(SecretCamera.ARAZI)
+    camera = gbv.USBCamera(asd)
     print(camera.get_fps())  # fps = 25
     original = gbv.FeedWindow(window_name='original')
     # camera.manually_bound()
